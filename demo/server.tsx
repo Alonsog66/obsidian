@@ -62,6 +62,14 @@ type Book {
   publicationDate: String
   publisher: String
   coverPrice: Float
+  whereToBuy: [Store]!
+}
+
+type Store {
+  id: ID
+  name: String
+  address: String
+  inventory: [Book]!
 }
 
 type ResolveType {
@@ -69,7 +77,7 @@ type ResolveType {
 }
 
 type Query {
-  getBook(id: ID): Book
+  getBook(id: ID): Book!
   getEightBooks(id: ID): [Book]
 }
 `;
@@ -81,14 +89,26 @@ const resolvers = {
       console.log('id', id);
       const data = await client.query(
         `
-        SELECT *
+        SELECT books.*, store.id AS storeID, store.name, store.address
         FROM books
-        WHERE id = $1
+        LEFT JOIN store_inventory ON books.id = store_inventory.book_id
+        LEFT JOIN store ON store.id = store_inventory.store_id
+        WHERE books.id = $1;
       `,
         id
       );
       console.log('Returned rows:');
       console.log(data.rows);
+      const whereToBuy:any = [];
+
+      data.rows.forEach((book:any) => {
+        whereToBuy.push({
+          id: book[7],
+          name: book[8],
+          address: book[9]
+        })
+      })
+
       const book = {
         id: data.rows[0][0],
         title: data.rows[0][1],
@@ -97,7 +117,10 @@ const resolvers = {
         publicationDate: data.rows[0][4],
         publisher: data.rows[0][5],
         coverPrice: data.rows[0][6],
+        whereToBuy
       };
+
+      console.log('book', book)
       return book;
     },
     getEightBooks: async (
@@ -146,7 +169,7 @@ await app.listen({ port: 8000 });
 
 // SSR of React App (invoked at line 12)
 
-function handlePage(ctx: any) {
+function handlePage(ctx: any) { // <ObsidianWrapper> needed
   try {
     const body = (ReactDomServer as any).renderToString(
       <ObsidianWrapper>
