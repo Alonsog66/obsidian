@@ -28,19 +28,19 @@ function ObsidianWrapper(props) {
     //     // resolve(JSON.parse(sessionStorage.getItem(query)))
     //   );
     // } else {
-    if (pollInterval !== null) {
-      console.log(
-        `Setting ${
-          pollInterval / 1000
-        } second poll interval for graphql request`
-      );
+    // if (pollInterval !== null) {
+    //   console.log(
+    //     `Setting ${
+    //       pollInterval / 1000
+    //     } second poll interval for graphql request`
+    //   );
 
-      setInterval(() => {
-        console.log('--------------');
-        console.log('Fetching query with poll interval');
-        fetchData(query, endpoint);
-      }, pollInterval);
-    }
+    //   setInterval(() => {
+    //     console.log('--------------');
+    //     console.log('Fetching query with poll interval');
+    //     fetchData(query, endpoint);
+    //   }, pollInterval);
+    // }
     console.log('--------------');
     console.log('Fetching Data');
     return await fetchData(query, endpoint);
