@@ -1,7 +1,16 @@
-import { Application, Router } from 'https://deno.land/x/oak@v6.0.1/mod.ts';
-import { gql } from 'https://deno.land/x/oak_graphql/mod.ts';
+import {
+  Application,
+  Router,
+  RouterContext,
+} from 'https://deno.land/x/oak@v6.0.1/mod.ts';
+import {
+  applyGraphQL,
+  gql,
+  GQLError,
+} from 'https://deno.land/x/oak_graphql/mod.ts';
+import * as Colors from 'https://deno.land/std/fmt/colors.ts';
 
-// Importing Obsidian Router for server
+// OBSIDIAN ROUTER
 import { ObsidianRouter } from '../src/obsidian.ts';
 
 // Importing Obsidian Wrapper for client-side application
@@ -20,7 +29,12 @@ const app = new Application();
 app.use(async (ctx, next) => {
   await next();
   const rt = ctx.response.headers.get('X-Response-Time');
-  console.log(`${ctx.request.method} ${ctx.request.url} - ${rt}`);
+  // console.log(`${ctx.request.method} ${ctx.request.url} - ${rt}`);
+  if (ctx.request.url.href === 'http://localhost:8000/graphql') {
+    console.log(
+      Colors.underline(Colors.cyan(`QUERY TOOK ` + Colors.bold(`${rt}`)))
+    );
+  }
 });
 
 app.use(async (ctx, next) => {
@@ -86,7 +100,7 @@ type Query {
 const resolvers = {
   Query: {
     getBook: async (parent: any, { id }: any, context: any, info: any) => {
-      console.log('id', id);
+      // console.log('id', id);
       const data = await client.query(
         `
         SELECT books.*, store.id AS storeID, store.name, store.address
@@ -97,17 +111,17 @@ const resolvers = {
       `,
         id
       );
-      console.log('Returned rows:');
-      console.log(data.rows);
-      const whereToBuy:any = [];
+      // console.log('Returned rows:');
+      // console.log(data.rows);
+      const whereToBuy: any = [];
 
-      data.rows.forEach((book:any) => {
+      data.rows.forEach((book: any) => {
         whereToBuy.push({
           id: book[7],
           name: book[8],
-          address: book[9]
-        })
-      })
+          address: book[9],
+        });
+      });
 
       const book = {
         id: data.rows[0][0],
@@ -117,10 +131,10 @@ const resolvers = {
         publicationDate: data.rows[0][4],
         publisher: data.rows[0][5],
         coverPrice: data.rows[0][6],
-        whereToBuy
+        whereToBuy,
       };
 
-      console.log('book', book)
+      // console.log('book', book)
       return book;
     },
     getEightBooks: async (
@@ -129,8 +143,8 @@ const resolvers = {
       context: any,
       info: any
     ) => {
-      console.log('id', id, context);
-      console.log(id + 7);
+      // console.log('id', id, context);
+      // console.log(id + 7);
       const data = await client.query(
         `
         SELECT books.title, books.author, books.id
@@ -141,8 +155,8 @@ const resolvers = {
         id,
         Number(id) + 7
       );
-      console.log('Returned rows:');
-      console.log(data.rows);
+      // console.log('Returned rows:');
+      // console.log(data.rows);
       const books = data.rows.map((cv) => {
         return {
           title: cv[0],
@@ -169,7 +183,8 @@ await app.listen({ port: 8000 });
 
 // SSR of React App (invoked at line 12)
 
-function handlePage(ctx: any) { // <ObsidianWrapper> needed
+function handlePage(ctx: any) {
+  // <ObsidianWrapper> needed
   try {
     const body = (ReactDomServer as any).renderToString(
       <ObsidianWrapper>
